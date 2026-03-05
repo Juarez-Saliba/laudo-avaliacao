@@ -483,9 +483,23 @@ function postProcessXCentering(zip) {
     while (para && !(para.localName === 'p' && para.namespaceURI === W)) para = para.parentNode;
     if (!para) continue;
 
-    // Garante que o parágrafo contém apenas "X"
-    const paraText = [...para.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('');
-    if (paraText !== 'X') continue;
+    // Garante que o parágrafo contém apenas "X" (ignora espaços)
+    const allTNodes = [...para.getElementsByTagNameNS(W, 't')];
+    const paraText = allTNodes.map(n => n.textContent).join('');
+    if (paraText.trim() !== 'X') continue;
+
+    // Remove espaços nos runs: mantém só "X", apaga runs vazios
+    for (const tNode of allTNodes) {
+      const trimmed = tNode.textContent.trim();
+      if (trimmed === 'X') {
+        tNode.textContent = 'X';
+        tNode.removeAttribute('xml:space');
+      } else {
+        // Run só com espaço — remove o w:r pai
+        const run = tNode.parentNode;
+        if (run) run.parentNode && run.parentNode.removeChild(run);
+      }
+    }
 
     // Alinhamento horizontal: w:jc center + remove indentação
     let pPr = getW(para, 'pPr');
