@@ -487,12 +487,14 @@ function postProcessXCentering(zip) {
     const paraText = [...para.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('');
     if (paraText !== 'X') continue;
 
-    // Alinhamento horizontal: w:jc center
+    // Alinhamento horizontal: w:jc center + remove indentação
     let pPr = getW(para, 'pPr');
     if (!pPr) { pPr = mkW('pPr'); para.insertBefore(pPr, para.firstChild); }
     let jc = getW(pPr, 'jc');
     if (!jc) { jc = mkW('jc'); pPr.appendChild(jc); }
     setVal(jc, 'center');
+    const ind = getW(pPr, 'ind');
+    if (ind) ind.parentNode.removeChild(ind);
 
     // Sobe até w:tc
     let tc = para.parentNode;
