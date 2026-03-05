@@ -516,11 +516,12 @@ function postProcessXCentering(zip) {
     if (!tc || processedTc.has(tc)) continue;
     processedTc.add(tc);
 
-    // Remove parágrafos vazios antes do parágrafo com "X"
-    for (const p of [...tc.getElementsByTagNameNS(W, 'p')]) {
+    // Remove parágrafos vazios antes do parágrafo com "X" (filhos diretos apenas)
+    for (const p of [...tc.childNodes]) {
+      if (p.localName !== 'p' || p.namespaceURI !== W) continue;
       if (p === para) break;
       const txt = [...p.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('').trim();
-      if (txt === '') p.parentNode.removeChild(p);
+      if (txt === '') tc.removeChild(p);
     }
 
     // Alinhamento vertical: w:vAlign center
