@@ -383,7 +383,7 @@ function collectCommonData() {
   const val = id => (document.getElementById(id) || {}).value || '';
   return {
     COMITENTE: val('comitente').toUpperCase(),
-    CIDADE:    val('cidade'),
+    CIDADE:    val('cidade').toUpperCase(),
     UF:        val('uf').toUpperCase(),
   };
 }
@@ -392,13 +392,13 @@ function collectVehicleData(vid) {
   const val = id => (document.getElementById(id) || {}).value || '';
 
   const data = {
-    PATIO:        val(`patio-${vid}`),
+    PATIO:        val(`patio-${vid}`).toUpperCase(),
     CHASSI:       val(`chassi-${vid}`).toUpperCase(),
     RENAVAM:      val(`renavam-${vid}`),
-    MARCA:        val(`marca-${vid}`),
-    MODELO:       val(`modelo-${vid}`),
-    TIPO:         val(`tipo-${vid}`),
-    'COMBUSTIVÉL': val(`combustivel-${vid}`),
+    MARCA:        val(`marca-${vid}`).toUpperCase(),
+    MODELO:       val(`modelo-${vid}`).toUpperCase(),
+    TIPO:         val(`tipo-${vid}`).toUpperCase(),
+    'COMBUSTIVÉL': val(`combustivel-${vid}`).toUpperCase(),
     ANOFAB:       val(`anofab-${vid}`),
     ANOMOD:       val(`anomod-${vid}`),
     COR:          val(`cor-${vid}`).toUpperCase(),
