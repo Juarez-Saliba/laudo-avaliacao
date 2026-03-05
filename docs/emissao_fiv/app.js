@@ -459,6 +459,59 @@ function collectVehicleData(vid) {
 }
 
 // ─────────────────────────────────────────────
+// Pós-processamento: centraliza células com "X"
+// ─────────────────────────────────────────────
+function postProcessXCentering(zip) {
+  const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const xmlStr = zip.files['word/document.xml'].asText();
+
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlStr, 'application/xml');
+  if (xmlDoc.querySelector('parsererror')) return;
+
+  const getW   = (el, tag) => [...el.childNodes].find(n => n.localName === tag && n.namespaceURI === W);
+  const mkW    = tag => xmlDoc.createElementNS(W, `w:${tag}`);
+  const setVal = (el, v) => el.setAttributeNS(W, 'w:val', v);
+
+  const processedTc = new Set();
+
+  for (const t of [...xmlDoc.getElementsByTagNameNS(W, 't')]) {
+    if (t.textContent !== 'X') continue;
+
+    // Sobe até w:p
+    let para = t.parentNode;
+    while (para && !(para.localName === 'p' && para.namespaceURI === W)) para = para.parentNode;
+    if (!para) continue;
+
+    // Garante que o parágrafo contém apenas "X"
+    const paraText = [...para.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('');
+    if (paraText !== 'X') continue;
+
+    // Alinhamento horizontal: w:jc center
+    let pPr = getW(para, 'pPr');
+    if (!pPr) { pPr = mkW('pPr'); para.insertBefore(pPr, para.firstChild); }
+    let jc = getW(pPr, 'jc');
+    if (!jc) { jc = mkW('jc'); pPr.appendChild(jc); }
+    setVal(jc, 'center');
+
+    // Sobe até w:tc
+    let tc = para.parentNode;
+    while (tc && !(tc.localName === 'tc' && tc.namespaceURI === W)) tc = tc.parentNode;
+    if (!tc || processedTc.has(tc)) continue;
+    processedTc.add(tc);
+
+    // Alinhamento vertical: w:vAlign center
+    let tcPr = getW(tc, 'tcPr');
+    if (!tcPr) { tcPr = mkW('tcPr'); tc.insertBefore(tcPr, tc.firstChild); }
+    let vAlign = getW(tcPr, 'vAlign');
+    if (!vAlign) { vAlign = mkW('vAlign'); tcPr.appendChild(vAlign); }
+    setVal(vAlign, 'center');
+  }
+
+  zip.file('word/document.xml', new XMLSerializer().serializeToString(xmlDoc));
+}
+
+// ─────────────────────────────────────────────
 // Geração do .docx para um conjunto de dados
 // ─────────────────────────────────────────────
 function generateDocx(data) {
@@ -468,6 +521,7 @@ function generateDocx(data) {
     linebreaks: true,
   });
   doc.render(data);
+  postProcessXCentering(doc.getZip());
   return doc.getZip().generate({
     type: 'blob',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
