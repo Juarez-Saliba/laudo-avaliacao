@@ -459,63 +459,41 @@ function collectVehicleData(vid) {
 }
 
 // ─────────────────────────────────────────────
-// Pós-processamento: centraliza células com "X"
+// Pós-processamento: remove parágrafos extras em células com "X"
 // ─────────────────────────────────────────────
 function postProcessXCentering(zip) {
-  const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-  const xmlStr = zip.files['word/document.xml'].asText();
+  let xml = zip.files['word/document.xml'].asText();
 
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlStr, 'application/xml');
-  if (xmlDoc.querySelector('parsererror')) return;
+  // Extrai o texto de um bloco XML (apenas conteúdo de <w:t>...)
+  const extractText = block => {
+    const matches = block.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || [];
+    return matches.map(m => m.replace(/<[^>]+>/g, '')).join('').trim();
+  };
 
-  const mkW      = tag => xmlDoc.createElementNS(W, `w:${tag}`);
-  const getChild = (el, tag) => [...el.childNodes].find(n => n.localName === tag && n.namespaceURI === W);
-  const getText  = el => [...el.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('').trim();
+  // Divide o XML em células <w:tc>...</w:tc>
+  xml = xml.replace(/(<w:tc>)([\s\S]*?)(<\/w:tc>)/g, (_, open, body, close) => {
+    // Separa os parágrafos dentro da célula
+    const parts = [];
+    const re = /(<w:p[ >][\s\S]*?<\/w:p>)/g;
+    let m;
+    while ((m = re.exec(body)) !== null) parts.push(m[1]);
 
-  // Percorre todas as células da tabela
-  for (const tc of [...xmlDoc.getElementsByTagNameNS(W, 'tc')]) {
-    const paras = [...tc.childNodes].filter(n => n.localName === 'p' && n.namespaceURI === W);
+    // Verifica se algum parágrafo tem apenas "X"
+    const xIdx = parts.findIndex(p => extractText(p) === 'X');
+    if (xIdx === -1) return open + body + close;
 
-    // Encontra o parágrafo que contém apenas "X"
-    const xPara = paras.find(p => getText(p) === 'X');
-    if (!xPara) continue;
+    // Remove todos os parágrafos sem texto (exceto o X)
+    const cleaned = parts.filter((p, i) => {
+      if (i === xIdx) return true;
+      return extractText(p) !== '';
+    });
 
-    // Remove TODOS os parágrafos vazios da célula (exceto o xPara)
-    for (const p of paras) {
-      if (p === xPara) continue;
-      if (getText(p) === '') tc.removeChild(p);
-    }
+    // Reconstrói a célula substituindo apenas os parágrafos
+    const newBody = body.replace(/(<w:p[ >][\s\S]*?<\/w:p>[\s]*)+/, cleaned.join(''));
+    return open + newBody + close;
+  });
 
-    // Limpa espaços: mantém só o run com "X", remove runs de espaço
-    for (const t of [...xPara.getElementsByTagNameNS(W, 't')]) {
-      if (t.textContent.trim() === 'X') {
-        t.textContent = 'X';
-        t.removeAttribute('xml:space');
-      } else {
-        const run = t.parentNode;
-        if (run && run.parentNode) run.parentNode.removeChild(run);
-      }
-    }
-
-    // Centralização horizontal + remove indentação
-    let pPr = getChild(xPara, 'pPr');
-    if (!pPr) { pPr = mkW('pPr'); xPara.insertBefore(pPr, xPara.firstChild); }
-    let jc = getChild(pPr, 'jc');
-    if (!jc) { jc = mkW('jc'); pPr.appendChild(jc); }
-    jc.setAttributeNS(W, 'w:val', 'center');
-    const ind = getChild(pPr, 'ind');
-    if (ind) pPr.removeChild(ind);
-
-    // Centralização vertical
-    let tcPr = getChild(tc, 'tcPr');
-    if (!tcPr) { tcPr = mkW('tcPr'); tc.insertBefore(tcPr, tc.firstChild); }
-    let vAlign = getChild(tcPr, 'vAlign');
-    if (!vAlign) { vAlign = mkW('vAlign'); tcPr.appendChild(vAlign); }
-    vAlign.setAttributeNS(W, 'w:val', 'center');
-  }
-
-  zip.file('word/document.xml', new XMLSerializer().serializeToString(xmlDoc));
+  zip.file('word/document.xml', xml);
 }
 
 // ─────────────────────────────────────────────
