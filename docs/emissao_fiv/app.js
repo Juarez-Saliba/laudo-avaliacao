@@ -516,6 +516,13 @@ function postProcessXCentering(zip) {
     if (!tc || processedTc.has(tc)) continue;
     processedTc.add(tc);
 
+    // Remove parágrafos vazios antes do parágrafo com "X"
+    for (const p of [...tc.getElementsByTagNameNS(W, 'p')]) {
+      if (p === para) break;
+      const txt = [...p.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('').trim();
+      if (txt === '') p.parentNode.removeChild(p);
+    }
+
     // Alinhamento vertical: w:vAlign center
     let tcPr = getW(tc, 'tcPr');
     if (!tcPr) { tcPr = mkW('tcPr'); tc.insertBefore(tcPr, tc.firstChild); }
