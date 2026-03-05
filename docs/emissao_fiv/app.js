@@ -469,67 +469,50 @@ function postProcessXCentering(zip) {
   const xmlDoc = parser.parseFromString(xmlStr, 'application/xml');
   if (xmlDoc.querySelector('parsererror')) return;
 
-  const getW   = (el, tag) => [...el.childNodes].find(n => n.localName === tag && n.namespaceURI === W);
-  const mkW    = tag => xmlDoc.createElementNS(W, `w:${tag}`);
-  const setVal = (el, v) => el.setAttributeNS(W, 'w:val', v);
+  const mkW      = tag => xmlDoc.createElementNS(W, `w:${tag}`);
+  const getChild = (el, tag) => [...el.childNodes].find(n => n.localName === tag && n.namespaceURI === W);
+  const getText  = el => [...el.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('').trim();
 
-  const processedTc = new Set();
+  // Percorre todas as células da tabela
+  for (const tc of [...xmlDoc.getElementsByTagNameNS(W, 'tc')]) {
+    const paras = [...tc.childNodes].filter(n => n.localName === 'p' && n.namespaceURI === W);
 
-  for (const t of [...xmlDoc.getElementsByTagNameNS(W, 't')]) {
-    if (t.textContent !== 'X') continue;
+    // Encontra o parágrafo que contém apenas "X"
+    const xPara = paras.find(p => getText(p) === 'X');
+    if (!xPara) continue;
 
-    // Sobe até w:p
-    let para = t.parentNode;
-    while (para && !(para.localName === 'p' && para.namespaceURI === W)) para = para.parentNode;
-    if (!para) continue;
+    // Remove TODOS os parágrafos vazios da célula (exceto o xPara)
+    for (const p of paras) {
+      if (p === xPara) continue;
+      if (getText(p) === '') tc.removeChild(p);
+    }
 
-    // Garante que o parágrafo contém apenas "X" (ignora espaços)
-    const allTNodes = [...para.getElementsByTagNameNS(W, 't')];
-    const paraText = allTNodes.map(n => n.textContent).join('');
-    if (paraText.trim() !== 'X') continue;
-
-    // Remove espaços nos runs: mantém só "X", apaga runs vazios
-    for (const tNode of allTNodes) {
-      const trimmed = tNode.textContent.trim();
-      if (trimmed === 'X') {
-        tNode.textContent = 'X';
-        tNode.removeAttribute('xml:space');
+    // Limpa espaços: mantém só o run com "X", remove runs de espaço
+    for (const t of [...xPara.getElementsByTagNameNS(W, 't')]) {
+      if (t.textContent.trim() === 'X') {
+        t.textContent = 'X';
+        t.removeAttribute('xml:space');
       } else {
-        // Run só com espaço — remove o w:r pai
-        const run = tNode.parentNode;
-        if (run) run.parentNode && run.parentNode.removeChild(run);
+        const run = t.parentNode;
+        if (run && run.parentNode) run.parentNode.removeChild(run);
       }
     }
 
-    // Alinhamento horizontal: w:jc center + remove indentação
-    let pPr = getW(para, 'pPr');
-    if (!pPr) { pPr = mkW('pPr'); para.insertBefore(pPr, para.firstChild); }
-    let jc = getW(pPr, 'jc');
+    // Centralização horizontal + remove indentação
+    let pPr = getChild(xPara, 'pPr');
+    if (!pPr) { pPr = mkW('pPr'); xPara.insertBefore(pPr, xPara.firstChild); }
+    let jc = getChild(pPr, 'jc');
     if (!jc) { jc = mkW('jc'); pPr.appendChild(jc); }
-    setVal(jc, 'center');
-    const ind = getW(pPr, 'ind');
-    if (ind) ind.parentNode.removeChild(ind);
+    jc.setAttributeNS(W, 'w:val', 'center');
+    const ind = getChild(pPr, 'ind');
+    if (ind) pPr.removeChild(ind);
 
-    // Sobe até w:tc
-    let tc = para.parentNode;
-    while (tc && !(tc.localName === 'tc' && tc.namespaceURI === W)) tc = tc.parentNode;
-    if (!tc || processedTc.has(tc)) continue;
-    processedTc.add(tc);
-
-    // Remove parágrafos vazios antes do parágrafo com "X" (filhos diretos apenas)
-    for (const p of [...tc.childNodes]) {
-      if (p.localName !== 'p' || p.namespaceURI !== W) continue;
-      if (p === para) break;
-      const txt = [...p.getElementsByTagNameNS(W, 't')].map(n => n.textContent).join('').trim();
-      if (txt === '') tc.removeChild(p);
-    }
-
-    // Alinhamento vertical: w:vAlign center
-    let tcPr = getW(tc, 'tcPr');
+    // Centralização vertical
+    let tcPr = getChild(tc, 'tcPr');
     if (!tcPr) { tcPr = mkW('tcPr'); tc.insertBefore(tcPr, tc.firstChild); }
-    let vAlign = getW(tcPr, 'vAlign');
+    let vAlign = getChild(tcPr, 'vAlign');
     if (!vAlign) { vAlign = mkW('vAlign'); tcPr.appendChild(vAlign); }
-    setVal(vAlign, 'center');
+    vAlign.setAttributeNS(W, 'w:val', 'center');
   }
 
   zip.file('word/document.xml', new XMLSerializer().serializeToString(xmlDoc));
