@@ -382,7 +382,7 @@ function vehicleCardHTML(vid) {
 function collectCommonData() {
   const val = id => (document.getElementById(id) || {}).value || '';
   return {
-    COMITENTE: val('comitente'),
+    COMITENTE: val('comitente').toUpperCase(),
     CIDADE:    val('cidade'),
     UF:        val('uf').toUpperCase(),
   };
@@ -401,7 +401,7 @@ function collectVehicleData(vid) {
     'COMBUSTIVÉL': val(`combustivel-${vid}`),
     ANOFAB:       val(`anofab-${vid}`),
     ANOMOD:       val(`anomod-${vid}`),
-    COR:          val(`cor-${vid}`),
+    COR:          val(`cor-${vid}`).toUpperCase(),
     PLACA:        val(`placa-${vid}`).toUpperCase(),
   };
 
