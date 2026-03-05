@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ficha de Inspeção Veicular • PW Leilões</title>
+    <link rel="icon" type="image/png" href="../logo/logo_one.png" />
+    <link rel="shortcut icon" type="image/png" href="../logo/logo_one.png" />
+    <link rel="apple-touch-icon" href="../logo/logo_one.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-wrap">
+          <img id="pwLogo" class="logo-img hidden" src="../logo/logo_two.png" alt="PW Leilões"
+               onload="this.classList.remove('hidden');document.getElementById('pwLogoFb').classList.add('hidden')" />
+          <div id="pwLogoFb" class="logo">PW</div>
+        </div>
+        <div class="brand-text">
+          <strong>PW Leilões</strong>
+          <span>Gerador de Ficha de Inspeção Veicular (FIV)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══════════════ MAIN ═══════════════ -->
+    <main>
+
+      <!-- Status do modelo -->
+      <div id="templateStatus" class="template-status">
+        <div id="templateStatusIcon" class="status-icon loading">↻</div>
+        <span id="templateStatusText">Carregando modelo da FIV…</span>
+      </div>
+
+      <!-- Upload do modelo (aparece se o auto-carregamento falhar) -->
+      <div id="templateUpload" class="form-section hidden">
+        <p class="section-title">Modelo da FIV</p>
+        <div class="upload-area" id="templateDropZone"
+             onclick="document.getElementById('templateFileInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+          </svg>
+          <p><strong>Clique para selecionar</strong> o modelo da FIV (.docx)</p>
+          <p>ou arraste aqui</p>
+        </div>
+        <input type="file" id="templateFileInput" accept=".docx" style="display:none" />
+        <div id="templateFileInfo" class="file-info hidden">
+          <div style="flex:1">
+            <div class="file-name" id="templateFileName"></div>
+            <div class="file-meta" id="templateFileMeta"></div>
+          </div>
+          <button class="btn ghost" id="templateClearFile"
+                  style="padding:5px 10px;font-size:13px;line-height:1">×</button>
+        </div>
+      </div>
+
+      <!-- ── DADOS DO COMITENTE (compartilhados entre todas as FIVs) ── -->
+      <div class="form-section">
+        <p class="section-title">Dados do Comitente
+          <span class="section-hint">— preenchidos automaticamente em todas as FIVs</span>
+        </p>
+        <div class="fields-grid">
+          <div class="field full">
+            <label for="comitente">Comitente</label>
+            <input type="text" id="comitente" placeholder="Prefeitura / Órgão" />
+          </div>
+          <div class="field w2">
+            <label for="cidade">Cidade</label>
+            <input type="text" id="cidade" placeholder="Cidade" />
+          </div>
+          <div class="field">
+            <label for="uf">UF</label>
+            <input type="text" id="uf" placeholder="UF" maxlength="2"
+                   style="text-transform:uppercase" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VEÍCULOS ── -->
+      <div class="vehicles-wrapper">
+        <div class="vehicles-header">
+          <p class="section-title" style="margin:0;border:none;padding:0">
+            Veículos
+            <span class="vehicle-count-badge" id="vehicleCountBadge">1</span>
+          </p>
+          <div style="display:flex;gap:8px">
+            <button type="button" id="addVehicleBtn" class="btn">
+              + Adicionar Veículo
+            </button>
+            <button type="button" id="generateBtnTop" class="btn primary">
+              ↓ &nbsp;Gerar FIV
+            </button>
+          </div>
+        </div>
+        <div id="vehiclesList"></div>
+      </div>
+
+      <!-- ── AÇÕES ── -->
+      <div class="form-actions">
+        <button type="button" id="clearAllBtn" class="btn ghost">Limpar Tudo</button>
+        <button type="button" id="generateBtn" class="btn primary large">
+          ↓ &nbsp;Gerar FIV
+        </button>
+      </div>
+
+    </main>
+
+    <!-- Toast de notificação -->
+    <div id="toast" class="toast">
+      <span class="toast-icon" id="toastIcon"></span>
+      <span class="toast-text" id="toastText"></span>
+    </div>
+
+    <!-- Dependências (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.43.0/build/docxtemplater.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

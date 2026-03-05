@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof -i :8787)",
+      "Bash(open \"http://localhost:8787/emissao_fiv/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8787/emissao_fiv/)",
+      "Bash(gh --version)",
+      "Bash(git init)",
+      "Bash(git add .)",
+      "Bash(git commit -m \"Initial commit\")",
+      "Bash(git branch -M main)",
+      "Bash(git remote add origin https://github.com/Juarez-Saliba/laudo-avaliacao.git)",
+      "Bash(git push -u origin main)"
+    ]
+  }
+}
