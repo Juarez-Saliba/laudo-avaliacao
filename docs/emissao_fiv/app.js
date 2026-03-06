@@ -745,8 +745,8 @@ function refreshProjectSelect() {
 }
 
 document.getElementById('saveProjectBtn').addEventListener('click', async () => {
-  const name = prompt('Nome do projeto:');
-  if (!name || !name.trim()) return;
+  const name = await showPrompt('Digite um nome para o projeto:', 'Ex: Lote 001 - Toyota Corolla');
+  if (!name) return;
   const projects = loadProjects();
   const id = Date.now().toString();
   projects.unshift({ id, name: name.trim(), ts: Date.now(), state: collectState() });
@@ -816,6 +816,40 @@ function showConfirm(msg) {
     function onCancel() { close(false); }
     okBtn.addEventListener('click', onOk);
     cancel.addEventListener('click', onCancel);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Modal de prompt (input de texto estilizado)
+// ─────────────────────────────────────────────
+function showPrompt(msg, placeholder = '') {
+  return new Promise(resolve => {
+    const modal  = document.getElementById('promptModal');
+    const msgEl  = document.getElementById('promptModalMsg');
+    const input  = document.getElementById('promptModalInput');
+    const okBtn  = document.getElementById('promptModalOk');
+    const cancel = document.getElementById('promptModalCancel');
+    const logo   = document.getElementById('promptModalLogo');
+    const pwLogo = document.getElementById('pwLogo');
+    if (pwLogo && pwLogo.src) logo.src = pwLogo.src;
+    msgEl.textContent = msg;
+    input.placeholder = placeholder;
+    input.value = '';
+    modal.classList.remove('hidden');
+    setTimeout(() => input.focus(), 50);
+    function close(result) {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKey);
+      resolve(result);
+    }
+    function onOk()     { close(input.value.trim() || null); }
+    function onCancel() { close(null); }
+    function onKey(e)   { if (e.key === 'Enter') onOk(); if (e.key === 'Escape') onCancel(); }
+    okBtn.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKey);
   });
 }
 

@@ -474,6 +474,8 @@ main { padding: 24px 20px 48px; max-width: 1000px; margin: 0 auto; }
 .confirm-logo { width: 56px; height: auto; display: block; }
 .confirm-msg { margin: 0 0 20px 0; color: var(--muted); white-space: pre-line; font-size: 14px; line-height: 1.6; }
 .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+.prompt-input { width: 100%; box-sizing: border-box; background: #1a1a1a; border: 1px solid var(--border); border-radius: 8px; color: var(--fg); font-family: inherit; font-size: 14px; padding: 9px 12px; margin-bottom: 20px; outline: none; }
+.prompt-input:focus { border-color: var(--accent); }
 
 /* ─── PROJECT SELECT ─── */
 .project-select {
