@@ -705,7 +705,7 @@ async function restoreState() {
 
     updateVehicleNumbers();
     updateGenerateBtn();
-    showToast('success', '✓', 'Sessão anterior restaurada (dados salvos por 24h).');
+    showToast('success', '✓', 'Sessão anterior restaurada (dados salvos por 48h).');
     return true;
   } catch (_) { return false; }
 }
