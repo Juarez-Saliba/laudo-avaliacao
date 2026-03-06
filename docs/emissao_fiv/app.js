@@ -641,6 +641,7 @@ const _LS_KEY       = 'fiv_state_v1';
 const _PROJECTS_KEY = 'fiv_projects_v1';
 const _TTL_MS       = 48 * 60 * 60 * 1000;
 let   _saveTimer = null;
+let   _currentProjectId = null;
 
 function scheduleSave() {
   clearTimeout(_saveTimer);
@@ -744,15 +745,44 @@ function refreshProjectSelect() {
   });
 }
 
+// Salvar Projeto: sobrescreve o projeto ativo; se nenhum, pede nome e cria
 document.getElementById('saveProjectBtn').addEventListener('click', async () => {
+  const projects = loadProjects();
+  if (_currentProjectId) {
+    const idx = projects.findIndex(p => p.id === _currentProjectId);
+    if (idx !== -1) {
+      projects[idx] = { ...projects[idx], ts: Date.now(), state: collectState() };
+      saveProjects(projects);
+      refreshProjectSelect();
+      document.getElementById('projectSelect').value = _currentProjectId;
+      showToast('success', '✓', `Projeto "${projects[idx].name}" atualizado.`);
+      return;
+    }
+  }
+  // Nenhum projeto ativo — cria novo (mesmo comportamento do Criar Projeto)
   const name = await showPrompt('Digite um nome para o projeto:', 'Ex: Lote 001 - Toyota Corolla');
+  if (!name) return;
+  const id = Date.now().toString();
+  projects.unshift({ id, name: name.trim(), ts: Date.now(), state: collectState() });
+  saveProjects(projects);
+  _currentProjectId = id;
+  refreshProjectSelect();
+  document.getElementById('projectSelect').value = id;
+  showToast('success', '✓', `Projeto "${name.trim()}" salvo.`);
+});
+
+// Criar Projeto: sempre pede nome e cria novo
+document.getElementById('newProjectBtn').addEventListener('click', async () => {
+  const name = await showPrompt('Digite um nome para o novo projeto:', 'Ex: Lote 001 - Toyota Corolla');
   if (!name) return;
   const projects = loadProjects();
   const id = Date.now().toString();
   projects.unshift({ id, name: name.trim(), ts: Date.now(), state: collectState() });
   saveProjects(projects);
+  _currentProjectId = id;
   refreshProjectSelect();
-  showToast('success', '✓', `Projeto "${name.trim()}" salvo.`);
+  document.getElementById('projectSelect').value = id;
+  showToast('success', '✓', `Projeto "${name.trim()}" criado.`);
 });
 
 document.getElementById('projectSelect').addEventListener('change', async () => {
@@ -788,7 +818,7 @@ document.getElementById('projectSelect').addEventListener('change', async () => 
   }
   updateVehicleNumbers();
   updateGenerateBtn();
-  sel.value = '';
+  _currentProjectId = id;
   showToast('success', '✓', `Projeto "${project.name}" carregado.`);
 });
 
@@ -860,6 +890,8 @@ document.getElementById('clearAllBtn').addEventListener('click', async () => {
   const ok = await showConfirm('Iniciar novo projeto vai apagar todos os dados atuais.\n\nDeseja continuar?');
   if (!ok) return;
   localStorage.removeItem(_LS_KEY);
+  _currentProjectId = null;
+  document.getElementById('projectSelect').value = '';
   ['comitente','cidade','uf'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('vehiclesList').innerHTML = '';
   vidCounter = 0;
