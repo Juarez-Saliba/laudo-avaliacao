@@ -477,8 +477,8 @@ main { padding: 24px 20px 48px; max-width: 1000px; margin: 0 auto; }
     flex-wrap: wrap;
     gap: 6px;
   }
-  .user-actions .project-select { flex: 1 1 100%; max-width: 100%; height: 42px; font-size: 14px; }
-  .user-actions .btn { flex: 1 1 auto; justify-content: center; font-size: 14px; padding: 0 16px; height: 42px; }
+  .user-actions .project-select { flex: 1 1 100%; max-width: 100%; height: 52px; font-size: 15px; }
+  .user-actions .btn { flex: 1 1 auto; justify-content: center; font-size: 15px; padding: 0 18px; height: 52px; }
 }
 
 /* ─── MODAL DE CONFIRMAÇÃO ─── */
