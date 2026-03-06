@@ -714,10 +714,35 @@ document.addEventListener('input',  scheduleSave);
 document.addEventListener('change', scheduleSave);
 
 // ─────────────────────────────────────────────
+// Modal de confirmação
+// ─────────────────────────────────────────────
+function showConfirm(msg) {
+  return new Promise(resolve => {
+    const modal  = document.getElementById('confirmModal');
+    const msgEl  = document.getElementById('confirmModalMsg');
+    const okBtn  = document.getElementById('confirmModalOk');
+    const cancel = document.getElementById('confirmModalCancel');
+    msgEl.textContent = msg;
+    modal.classList.remove('hidden');
+    function close(result) {
+      modal.classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      resolve(result);
+    }
+    function onOk()     { close(true);  }
+    function onCancel() { close(false); }
+    okBtn.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+  });
+}
+
+// ─────────────────────────────────────────────
 // Botão Novo Projeto
 // ─────────────────────────────────────────────
-document.getElementById('clearAllBtn').addEventListener('click', () => {
-  if (!confirm('Iniciar novo projeto vai apagar todos os dados atuais.\n\nDeseja continuar?')) return;
+document.getElementById('clearAllBtn').addEventListener('click', async () => {
+  const ok = await showConfirm('Iniciar novo projeto vai apagar todos os dados atuais.\n\nDeseja continuar?');
+  if (!ok) return;
   localStorage.removeItem(_LS_KEY);
   ['comitente','cidade','uf'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('vehiclesList').innerHTML = '';
