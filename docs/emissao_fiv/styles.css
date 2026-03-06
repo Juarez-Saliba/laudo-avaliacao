@@ -35,11 +35,6 @@ body {
   padding: 12px 20px;
   background: #000;
   border-bottom: 1px solid var(--border);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
 }
 .brand { display: flex; align-items: center; gap: 12px; }
 .logo-wrap { display: flex; align-items: center; }
@@ -78,7 +73,7 @@ body {
 .btn:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
 
 /* ─── MAIN ─── */
-main { padding: 90px 20px 48px; max-width: 1000px; margin: 0 auto; }
+main { padding: 24px 20px 48px; max-width: 1000px; margin: 0 auto; }
 
 /* ─── TEMPLATE STATUS BAR ─── */
 .template-status {
@@ -460,7 +455,7 @@ main { padding: 90px 20px 48px; max-width: 1000px; margin: 0 auto; }
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 640px) {
-  main { padding: 145px 12px 40px; }
+  main { padding: 16px 12px 40px; }
   .fields-grid { grid-template-columns: 1fr; }
   .field.full, .field.w2 { grid-column: 1 / -1; }
   .radio-grid { flex-direction: column; }
