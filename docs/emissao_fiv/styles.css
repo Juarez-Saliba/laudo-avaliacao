@@ -467,10 +467,10 @@ main { padding: 24px 20px 48px; max-width: 1000px; margin: 0 auto; }
 }
 
 /* ─── MODAL DE CONFIRMAÇÃO ─── */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 200; }
 .modal.hidden { display: none; }
-.modal-card { background: #0f0f0f; border: 1px solid var(--border); border-radius: 14px; padding: 24px; max-width: 440px; width: 92%; }
-.modal-header { margin-bottom: 16px; }
-.confirm-logo { width: 52px; height: auto; display: block; }
-.confirm-msg { margin: 0 0 24px 0; color: var(--muted); white-space: pre-line; font-size: 14px; line-height: 1.65; }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.confirm-card { background: #0f0f0f; border: 1px solid var(--border); border-radius: 14px; padding: 24px; max-width: 440px; width: 92%; text-align: center; }
+.confirm-header { display: flex; justify-content: center; margin-bottom: 16px; }
+.confirm-logo { width: 56px; height: auto; display: block; }
+.confirm-msg { margin: 0 0 20px 0; color: var(--muted); white-space: pre-line; font-size: 14px; line-height: 1.6; }
+.confirm-actions { display: flex; gap: 8px; justify-content: center; }

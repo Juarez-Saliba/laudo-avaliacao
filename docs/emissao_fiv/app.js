@@ -722,6 +722,9 @@ function showConfirm(msg) {
     const msgEl  = document.getElementById('confirmModalMsg');
     const okBtn  = document.getElementById('confirmModalOk');
     const cancel = document.getElementById('confirmModalCancel');
+    const logo   = document.getElementById('confirmModalLogo');
+    const pwLogo = document.getElementById('pwLogo');
+    if (pwLogo && pwLogo.src) logo.src = pwLogo.src;
     msgEl.textContent = msg;
     modal.classList.remove('hidden');
     function close(result) {
