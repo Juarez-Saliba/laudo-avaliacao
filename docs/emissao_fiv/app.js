@@ -755,7 +755,7 @@ document.getElementById('saveProjectBtn').addEventListener('click', async () => 
       saveProjects(projects);
       refreshProjectSelect();
       document.getElementById('projectSelect').value = _currentProjectId;
-      showToast('success', '✓', `Projeto "${projects[idx].name}" atualizado.`);
+      showToast('success', '✓', `Projeto "${projects[idx].name}" Salvo.`);
       return;
     }
   }
