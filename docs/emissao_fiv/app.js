@@ -635,16 +635,91 @@ document.getElementById('generateBtnTop').addEventListener('click', () => {
 });
 
 // ─────────────────────────────────────────────
-// Botão Limpar Tudo
+// Persistência 24h (localStorage)
+// ─────────────────────────────────────────────
+const _LS_KEY = 'fiv_state_v1';
+const _TTL_MS = 24 * 60 * 60 * 1000;
+let   _saveTimer = null;
+
+function scheduleSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveState, 800);
+}
+
+function collectState() {
+  const val = id => (document.getElementById(id) || {}).value || '';
+  const checkKeys = ['PDA','PDF','PDO','PTA','PTF','PTO','BDA','BDF','BDO','BTA','BTF','BTO',
+    'FA','FF','FO','LA','LF','LO','MA','MF','MO','LATA','LATF','LATO',
+    'PA','PF','PO','PIA','PIF','PIO','CMA','CMF','CMO','CA','CF','CO'];
+  const radioNames = ['estadoGeral','condLoc','pneuDD','pneuDE','pneuTD','pneuTE','rodaDD','rodaDE','rodaTD','rodaTE'];
+  const textFields = ['patio','chassi','renavam','marca','modelo','tipo','combustivel','anofab','anomod','cor','placa','data'];
+
+  const vehicles = [...document.querySelectorAll('.vehicle-card')].map(card => {
+    const vid = card.dataset.vid;
+    const v = { vid };
+    textFields.forEach(f => { v[f] = val(`${f}-${vid}`); });
+    radioNames.forEach(name => {
+      const sel = document.querySelector(`input[name="${name}-${vid}"]:checked`);
+      v[name] = sel ? sel.value : '';
+    });
+    v.checkboxes = checkKeys.filter(k => (document.getElementById(`${k}-${vid}`) || {}).checked);
+    return v;
+  });
+
+  return { ts: Date.now(), comitente: val('comitente'), cidade: val('cidade'), uf: val('uf'), vehicles };
+}
+
+function saveState() {
+  try { localStorage.setItem(_LS_KEY, JSON.stringify(collectState())); } catch (_) {}
+}
+
+async function restoreState() {
+  try {
+    const raw = localStorage.getItem(_LS_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved?.ts || Date.now() - saved.ts > _TTL_MS) { localStorage.removeItem(_LS_KEY); return false; }
+
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    setVal('comitente', saved.comitente);
+    setVal('cidade', saved.cidade);
+    setVal('uf', saved.uf);
+
+    document.getElementById('vehiclesList').innerHTML = '';
+    vidCounter = 0;
+
+    // Restaura na ordem inversa (addVehicle prepend → último fica no topo)
+    for (const v of [...(saved.vehicles || [])].reverse()) {
+      addVehicle();
+      const vid = vidCounter;
+      ['patio','chassi','renavam','marca','modelo','tipo','combustivel','anofab','anomod','cor','placa','data']
+        .forEach(f => setVal(`${f}-${vid}`, v[f]));
+      ['estadoGeral','condLoc','pneuDD','pneuDE','pneuTD','pneuTE','rodaDD','rodaDE','rodaTD','rodaTE']
+        .forEach(name => {
+          if (v[name]) { const el = document.querySelector(`input[name="${name}-${vid}"][value="${v[name]}"]`); if (el) el.checked = true; }
+        });
+      (v.checkboxes || []).forEach(k => { const el = document.getElementById(`${k}-${vid}`); if (el) el.checked = true; });
+      updateVehicleLabel(vid);
+    }
+
+    updateVehicleNumbers();
+    updateGenerateBtn();
+    showToast('success', '✓', 'Sessão anterior restaurada (dados salvos por 24h).');
+    return true;
+  } catch (_) { return false; }
+}
+
+// Auto-save em qualquer interação com o formulário
+document.addEventListener('input',  scheduleSave);
+document.addEventListener('change', scheduleSave);
+
+// ─────────────────────────────────────────────
+// Botão Novo Projeto
 // ─────────────────────────────────────────────
 document.getElementById('clearAllBtn').addEventListener('click', () => {
-  if (!confirm('Deseja limpar todos os dados e reiniciar?')) return;
-  // Limpa campos comuns
-  ['comitente','cidade','uf'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  // Remove todos os veículos e adiciona um em branco
+  if (!confirm('Iniciar novo projeto vai apagar todos os dados atuais.\n\nDeseja continuar?')) return;
+  localStorage.removeItem(_LS_KEY);
+  ['comitente','cidade','uf'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('vehiclesList').innerHTML = '';
   vidCounter = 0;
   addVehicle();
@@ -667,4 +742,4 @@ function showToast(type, icon, text) {
 // Inicialização
 // ─────────────────────────────────────────────
 tryAutoLoad();
-addVehicle(); // começa com um veículo em branco
+restoreState().then(restored => { if (!restored) addVehicle(); });
