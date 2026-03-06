@@ -637,8 +637,9 @@ document.getElementById('generateBtnTop').addEventListener('click', () => {
 // ─────────────────────────────────────────────
 // Persistência 24h (localStorage)
 // ─────────────────────────────────────────────
-const _LS_KEY = 'fiv_state_v1';
-const _TTL_MS = 24 * 60 * 60 * 1000;
+const _LS_KEY       = 'fiv_state_v1';
+const _PROJECTS_KEY = 'fiv_projects_v1';
+const _TTL_MS       = 48 * 60 * 60 * 1000;
 let   _saveTimer = null;
 
 function scheduleSave() {
@@ -714,6 +715,77 @@ document.addEventListener('input',  scheduleSave);
 document.addEventListener('change', scheduleSave);
 
 // ─────────────────────────────────────────────
+// Gerenciamento de projetos
+// ─────────────────────────────────────────────
+function loadProjects() {
+  try { return JSON.parse(localStorage.getItem(_PROJECTS_KEY) || '[]'); } catch (_) { return []; }
+}
+
+function saveProjects(list) {
+  try { localStorage.setItem(_PROJECTS_KEY, JSON.stringify(list)); } catch (_) {}
+}
+
+function refreshProjectSelect() {
+  const sel = document.getElementById('projectSelect');
+  const projects = loadProjects();
+  sel.innerHTML = '<option value="">— Projetos salvos —</option>';
+  projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${new Date(p.ts).toLocaleDateString('pt-BR')})`;
+    sel.appendChild(opt);
+  });
+}
+
+document.getElementById('saveProjectBtn').addEventListener('click', async () => {
+  const name = prompt('Nome do projeto:');
+  if (!name || !name.trim()) return;
+  const projects = loadProjects();
+  const id = Date.now().toString();
+  projects.unshift({ id, name: name.trim(), ts: Date.now(), state: collectState() });
+  saveProjects(projects);
+  refreshProjectSelect();
+  showToast('success', '✓', `Projeto "${name.trim()}" salvo.`);
+});
+
+document.getElementById('projectSelect').addEventListener('change', async () => {
+  const sel = document.getElementById('projectSelect');
+  const id = sel.value;
+  if (!id) return;
+  const projects = loadProjects();
+  const project = projects.find(p => p.id === id);
+  if (!project) return;
+
+  const ok = await showConfirm(`Carregar "${project.name}" vai substituir os dados atuais.\n\nDeseja continuar?`);
+  if (!ok) { sel.value = ''; return; }
+
+  const saved = project.state;
+  const setVal = (elId, v) => { const el = document.getElementById(elId); if (el) el.value = v || ''; };
+  setVal('comitente', saved.comitente);
+  setVal('cidade', saved.cidade);
+  setVal('uf', saved.uf);
+
+  document.getElementById('vehiclesList').innerHTML = '';
+  vidCounter = 0;
+  for (const v of [...(saved.vehicles || [])].reverse()) {
+    addVehicle();
+    const vid = vidCounter;
+    ['patio','chassi','renavam','marca','modelo','tipo','combustivel','anofab','anomod','cor','placa','data']
+      .forEach(f => setVal(`${f}-${vid}`, v[f]));
+    ['estadoGeral','condLoc','pneuDD','pneuDE','pneuTD','pneuTE','rodaDD','rodaDE','rodaTD','rodaTE']
+      .forEach(name => {
+        if (v[name]) { const el = document.querySelector(`input[name="${name}-${vid}"][value="${v[name]}"]`); if (el) el.checked = true; }
+      });
+    (v.checkboxes || []).forEach(k => { const el = document.getElementById(`${k}-${vid}`); if (el) el.checked = true; });
+    updateVehicleLabel(vid);
+  }
+  updateVehicleNumbers();
+  updateGenerateBtn();
+  sel.value = '';
+  showToast('success', '✓', `Projeto "${project.name}" carregado.`);
+});
+
+// ─────────────────────────────────────────────
 // Modal de confirmação
 // ─────────────────────────────────────────────
 function showConfirm(msg) {
@@ -770,4 +842,5 @@ function showToast(type, icon, text) {
 // Inicialização
 // ─────────────────────────────────────────────
 tryAutoLoad();
+refreshProjectSelect();
 restoreState().then(restored => { if (!restored) addVehicle(); });
