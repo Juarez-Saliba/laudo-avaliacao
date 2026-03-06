@@ -717,8 +717,15 @@ document.addEventListener('change', scheduleSave);
 // ─────────────────────────────────────────────
 // Gerenciamento de projetos
 // ─────────────────────────────────────────────
+const _PROJECT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
+
 function loadProjects() {
-  try { return JSON.parse(localStorage.getItem(_PROJECTS_KEY) || '[]'); } catch (_) { return []; }
+  try {
+    const all = JSON.parse(localStorage.getItem(_PROJECTS_KEY) || '[]');
+    const valid = all.filter(p => Date.now() - p.ts <= _PROJECT_TTL_MS);
+    if (valid.length !== all.length) saveProjects(valid); // limpa expirados
+    return valid;
+  } catch (_) { return []; }
 }
 
 function saveProjects(list) {
